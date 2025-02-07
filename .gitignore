@@ -1,6 +1,8 @@
 # macOS
 .DS_Store
 
+# venv
+.venv/
 
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
