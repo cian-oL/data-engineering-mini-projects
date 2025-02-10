@@ -154,7 +154,7 @@ songplay_table_insert = """
         user_agent
     )
     SELECT
-        TO_TIMESTAMP(events.ts / 1000), 
+        (TIMESTAMP 'epoch' + events.ts/1000 * INTERVAL '1 second' AS start_time), 
         events.userId,
         events.level,
         songs.song_id,
@@ -230,14 +230,15 @@ time_table_insert = """
         year,
         weekday
     )
-    SELECT DISTINCT ts,
-        EXTRACT(hour from ts),
-        EXTRACT(day from ts),
-        EXTRACT(week from ts),
-        EXTRACT(month from ts),
-        EXTRACT(year from ts),
-        EXTRACT(weekday from ts)
-    FROM staging_events
+    SELECT DISTINCT 
+        (TIMESTAMP 'epoch' + events.ts/1000 * INTERVAL '1 second' AS start_time),
+        EXTRACT(hour from start_time),
+        EXTRACT(day from start_time),
+        EXTRACT(week from start_time),
+        EXTRACT(month from start_time),
+        EXTRACT(year from start_time),
+        EXTRACT(weekday from start_time)
+    FROM staging_events events
     """
 
 # QUERY LISTS
