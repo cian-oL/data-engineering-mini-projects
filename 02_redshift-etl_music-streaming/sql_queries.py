@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS staging_events (
     sessionId INT,
     song TEXT,
     status INT,
-    ts TIMESTAMP,
+    ts BIGINT,
     userAgent TEXT,
     userId INT
 )
@@ -154,7 +154,7 @@ songplay_table_insert = """
         user_agent
     )
     SELECT
-        events.ts, 
+        TO_TIMESTAMP(events.ts / 1000), 
         events.userId,
         events.level,
         songs.song_id,
