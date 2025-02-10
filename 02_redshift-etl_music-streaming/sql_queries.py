@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS staging_events (
     sessionId INT,
     song TEXT,
     status INT,
-    ts BIGINT,
+    ts TIMESTAMP,
     userAgent TEXT,
     userId INT
 )
