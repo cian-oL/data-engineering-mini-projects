@@ -14,8 +14,8 @@ ROLE_ARN = config.get("IAM_ROLE", "ARN")
 
 # DROP TABLES
 
-staging_events_table_drop = "DROP TABLE IF EXISTS log_data"
-staging_songs_table_drop = "DROP TABLE IF EXISTS song_data"
+staging_events_table_drop = "DROP TABLE IF EXISTS staging_events"
+staging_songs_table_drop = "DROP TABLE IF EXISTS staging_songs"
 songplay_table_drop = "DROP TABLE IF EXISTS fact_songplays"
 user_table_drop = "DROP TABLE IF EXISTS dim_users"
 song_table_drop = "DROP TABLE IF EXISTS dim_songs"
@@ -24,7 +24,7 @@ time_table_drop = "DROP TABLE IF EXISTS dim_time"
 
 # CREATE TABLES
 staging_events_table_create = """
-CREATE TABLE IF NOT EXISTS log_data (
+CREATE TABLE IF NOT EXISTS staging_events (
     artist TEXT,
     auth TEXT,
     firstName TEXT,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS log_data (
 """
 
 staging_songs_table_create = """
-CREATE TABLE IF NOT EXISTS song_data (
+CREATE TABLE IF NOT EXISTS staging_songs (
     song_id INT,
     title TEXT,
     duration DECIMAL(10,5),
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS dim_time (
 
 staging_events_copy = (
     """
-    COPY log_data 
+    COPY staging_events
     FROM '{}'
     REGION '{}'
     IAM_ROLE '{}'
@@ -130,7 +130,7 @@ staging_events_copy = (
 
 staging_songs_copy = (
     """
-    COPY song_data 
+    COPY staging_songs 
     FROM '{}'
     REGION '{}'
     IAM_ROLE '{}'
