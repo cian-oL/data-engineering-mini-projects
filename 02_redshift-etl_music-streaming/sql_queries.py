@@ -37,10 +37,10 @@ CREATE TABLE IF NOT EXISTS staging_events (
     method TEXT,
     page TEXT,
     registration BIGINT,
-    session_id INT,
+    sessionId INT,
     song TEXT,
     status INT,
-    timestamp BIGINT,
+    ts BIGINT,
     userAgent TEXT,
     userId INT
 )
@@ -145,7 +145,8 @@ staging_songs_copy = (
 songplay_table_insert = """
     INSERT INTO fact_songplays (
         start_time,
-        user_id, level,
+        user_id,
+        level,
         song_id,
         artist_id,
         session_id,
@@ -153,14 +154,14 @@ songplay_table_insert = """
         user_agent
     )
     SELECT
-        events.start_time, 
-        events.user_id,
+        events.ts, 
+        events.userId,
         events.level,
         songs.song_id,
         songs.artist_id,
-        events.session_id,
+        events.sessionId,
         events.location,
-        events.user_agent
+        events.userAgent
     FROM staging_events events
     JOIN staging_songs songs
         ON events.song = songs.title 
@@ -176,13 +177,13 @@ user_table_insert = """
         level
     )
     SELECT
-        events.user_id,
-        events.first_name,
-        events.last_name,
+        events.userId,
+        events.firstName,
+        events.lastName,
         events.gender,
         events.level
     FROM staging_events events
-    WHERE events.user_id IS NOT NULL
+    WHERE events.userId IS NOT NULL
     """
 
 song_table_insert = """
@@ -214,8 +215,8 @@ artist_table_insert = """
         artist_id,
         artist_name,
         artist_location,
-        latitude,
-        longitude
+        artist_latitude,
+        artist_longitude
     FROM staging_songs
     """
 
@@ -230,12 +231,12 @@ time_table_insert = """
         weekday
     )
     SELECT DISTINCT start_time,
-        EXTRACT(hour from start_time),
-        EXTRACT(day from start_time),
-        EXTRACT(week from start_time),
-        EXTRACT(month from start_time),
-        EXTRACT(year from start_time),
-        EXTRACT(weekday from start_time)
+        EXTRACT(hour from ts),
+        EXTRACT(day from ts),
+        EXTRACT(week from ts),
+        EXTRACT(month from ts),
+        EXTRACT(year from ts),
+        EXTRACT(weekday from ts)
     FROM staging_events
     """
 
