@@ -230,7 +230,7 @@ time_table_insert = """
         year,
         weekday
     )
-    SELECT DISTINCT start_time,
+    SELECT DISTINCT ts,
         EXTRACT(hour from ts),
         EXTRACT(day from ts),
         EXTRACT(week from ts),

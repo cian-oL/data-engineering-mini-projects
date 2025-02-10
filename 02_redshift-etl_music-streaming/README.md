@@ -10,8 +10,8 @@ The project creates an ETL pipeline that extracts data from S3, stages it in Red
 
 #### Staging Tables
 
-- `log_data`: Raw event data from user activity logs
-- `song_data`: Raw song metadata
+- `staging_events`: Raw event data from user activity logs
+- `staging_songs`: Raw song metadata
 
 #### Fact Table
 
