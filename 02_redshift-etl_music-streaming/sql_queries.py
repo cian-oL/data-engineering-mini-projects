@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS staging_events (
 
 staging_songs_table_create = """
 CREATE TABLE IF NOT EXISTS staging_songs (
-    song_id INT,
+    song_id TEXT,
     title TEXT,
     duration DECIMAL(10,5),
     year INT,
@@ -66,12 +66,13 @@ CREATE TABLE IF NOT EXISTS fact_songplays (
     start_time TIMESTAMP NOT NULL,
     user_id INT NOT NULL,
     level TEXT,
-    song_id TEXT,
+    song_id TEXT DISTKEY,
     artist_id TEXT,
     session_id INT,
     location TEXT,
     user_agent TEXT
 )
+COMPOUND SORTKEY(start_time, session_id)
 """
 
 user_table_create = """
@@ -86,10 +87,10 @@ CREATE TABLE IF NOT EXISTS dim_users (
 
 song_table_create = """
 CREATE TABLE IF NOT EXISTS dim_songs (
-    song_id TEXT PRIMARY KEY,
+    song_id TEXT PRIMARY KEY DISTKEY,
     title TEXT NOT NULL,
     artist_id TEXT NOT NULL,
-    year INT,
+    year INT SORTKEY,
     duration DECIMAL(10,5)
 )
 """
@@ -134,9 +135,7 @@ staging_songs_copy = (
     FROM '{}'
     REGION '{}'
     IAM_ROLE '{}'
-    FORMAT AS CSV
-    DELIMITER ','
-    IGNOREHEADER 1;
+    FORMAT AS JSON 'auto'
     """
 ).format(S3_SONG_DATA, S3_REGION, ROLE_ARN)
 
@@ -176,14 +175,14 @@ user_table_insert = """
         gender,
         level
     )
-    SELECT
-        events.userId,
-        events.firstName,
-        events.lastName,
-        events.gender,
-        events.level
-    FROM staging_events events
-    WHERE events.userId IS NOT NULL
+    SELECT DISTINCT
+        userId,
+        firstName,
+        lastName,
+        gender,
+        level
+    FROM staging_events
+    WHERE userId IS NOT NULL
     """
 
 song_table_insert = """
