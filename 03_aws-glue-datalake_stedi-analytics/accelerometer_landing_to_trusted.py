@@ -61,7 +61,6 @@ select
     y,
     z
 from myDataSource
-
 """
 SQLQuery_node1739901137740 = sparkSqlQuery(
     glueContext,
@@ -88,7 +87,6 @@ AccelerometerTrusted_node1739890427020 = glueContext.getSink(
     connection_type="s3",
     updateBehavior="UPDATE_IN_DATABASE",
     partitionKeys=[],
-    compression="snappy",
     enableUpdateCatalog=True,
     transformation_ctx="AccelerometerTrusted_node1739890427020",
 )
