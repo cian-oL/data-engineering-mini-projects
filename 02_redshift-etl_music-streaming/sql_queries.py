@@ -183,7 +183,7 @@ user_table_insert = """
         gender,
         level
     FROM staging_events
-    WHERE userId IS NOT NULL AND events.page = 'NextSong'
+    WHERE userId IS NOT NULL AND page = 'NextSong'
     """
 
 song_table_insert = """
