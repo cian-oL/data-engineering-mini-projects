@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS staging_events (
 
 staging_songs_table_create = """
 CREATE TABLE IF NOT EXISTS staging_songs (
-    song_id INT,
+    song_id TEXT,
     title TEXT,
     duration DECIMAL(10,5),
     year INT,
@@ -62,21 +62,22 @@ CREATE TABLE IF NOT EXISTS staging_songs (
 
 songplay_table_create = """
 CREATE TABLE IF NOT EXISTS fact_songplays (
-    songplay_id INT IDENTITY(0,1) PRIMARY KEY,
+    songplay_id BIGINT IDENTITY(0,1) PRIMARY KEY,
     start_time TIMESTAMP NOT NULL,
     user_id INT NOT NULL,
     level TEXT,
-    song_id TEXT,
-    artist_id TEXT,
+    song_id TEXT NOT NULL DISTKEY,
+    artist_id TEXT NOT NULL,
     session_id INT,
     location TEXT,
     user_agent TEXT
 )
+COMPOUND SORTKEY(start_time, session_id)
 """
 
 user_table_create = """
 CREATE TABLE IF NOT EXISTS dim_users (
-    user_id INT PRIMARY KEY,
+    user_id INT PRIMARY KEY SORTKEY,
     first_name TEXT,
     last_name TEXT,
     gender CHAR(1),
@@ -86,18 +87,18 @@ CREATE TABLE IF NOT EXISTS dim_users (
 
 song_table_create = """
 CREATE TABLE IF NOT EXISTS dim_songs (
-    song_id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
+    song_id TEXT PRIMARY KEY DISTKEY,
+    title TEXT,
     artist_id TEXT NOT NULL,
-    year INT,
+    year INT SORTKEY,
     duration DECIMAL(10,5)
 )
 """
 
 artist_table_create = """
 CREATE TABLE IF NOT EXISTS dim_artists (
-    artist_id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
+    artist_id TEXT PRIMARY KEY SORTKEY,
+    name TEXT,
     location TEXT,
     latitude DECIMAL(9,6),
     longitude DECIMAL(9,6)
@@ -106,7 +107,7 @@ CREATE TABLE IF NOT EXISTS dim_artists (
 
 time_table_create = """
 CREATE TABLE IF NOT EXISTS dim_time (
-    start_time TIMESTAMP PRIMARY KEY,
+    start_time TIMESTAMP PRIMARY KEY SORTKEY,
     hour SMALLINT,
     day SMALLINT,
     week SMALLINT,
@@ -134,9 +135,7 @@ staging_songs_copy = (
     FROM '{}'
     REGION '{}'
     IAM_ROLE '{}'
-    FORMAT AS CSV
-    DELIMITER ','
-    IGNOREHEADER 1;
+    FORMAT AS JSON 'auto'
     """
 ).format(S3_SONG_DATA, S3_REGION, ROLE_ARN)
 
@@ -154,7 +153,7 @@ songplay_table_insert = """
         user_agent
     )
     SELECT
-        TO_TIMESTAMP(events.ts / 1000), 
+        TIMESTAMP 'epoch' + events.ts/1000 * INTERVAL '1 second' AS start_time, 
         events.userId,
         events.level,
         songs.song_id,
@@ -163,9 +162,10 @@ songplay_table_insert = """
         events.location,
         events.userAgent
     FROM staging_events events
-    JOIN staging_songs songs
+    LEFT JOIN staging_songs songs
         ON events.song = songs.title 
         AND events.artist = songs.artist_name
+    WHERE songs.song_id IS NOT NULL AND events.page = 'NextSong'
     """
 
 user_table_insert = """
@@ -176,14 +176,14 @@ user_table_insert = """
         gender,
         level
     )
-    SELECT
-        events.userId,
-        events.firstName,
-        events.lastName,
-        events.gender,
-        events.level
-    FROM staging_events events
-    WHERE events.userId IS NOT NULL
+    SELECT DISTINCT
+        userId,
+        firstName,
+        lastName,
+        gender,
+        level
+    FROM staging_events
+    WHERE userId IS NOT NULL AND page = 'NextSong'
     """
 
 song_table_insert = """
@@ -230,14 +230,16 @@ time_table_insert = """
         year,
         weekday
     )
-    SELECT DISTINCT ts,
-        EXTRACT(hour from ts),
-        EXTRACT(day from ts),
-        EXTRACT(week from ts),
-        EXTRACT(month from ts),
-        EXTRACT(year from ts),
-        EXTRACT(weekday from ts)
-    FROM staging_events
+    SELECT DISTINCT 
+        TIMESTAMP 'epoch' + events.ts/1000 * INTERVAL '1 second' AS start_time,
+        EXTRACT(hour from start_time),
+        EXTRACT(day from start_time),
+        EXTRACT(week from start_time),
+        EXTRACT(month from start_time),
+        EXTRACT(year from start_time),
+        EXTRACT(weekday from start_time)
+    FROM staging_events events
+    WHERE events.page = 'NextSong'
     """
 
 # QUERY LISTS
