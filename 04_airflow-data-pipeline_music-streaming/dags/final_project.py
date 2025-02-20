@@ -108,7 +108,11 @@ def final_project():
 
     run_quality_checks = DataQualityOperator(
         task_id="Run_data_quality_checks",
+        redshift_conn_id="redshift",
+        tables=["songplays", "users", "songs", "artists", "time"],
     )
+
+    end_operator = DummyOperator(task_id="End_execution")
 
     # 1. Create tables, extract data and load to fact table
     start_operator >> create_tables_task
@@ -126,6 +130,7 @@ def final_project():
     load_song_dimension_table >> run_quality_checks
     load_artist_dimension_table >> run_quality_checks
     load_time_dimension_table >> run_quality_checks
+    run_quality_checks >> end_operator
 
 
 final_project_dag = final_project()
