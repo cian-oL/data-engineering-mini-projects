@@ -17,14 +17,14 @@ class StageToRedshiftOperator(BaseOperator):
     @apply_defaults
     def __init__(
         self,
-        aws_conn_id="aws_credentials",
-        redshift_conn_id="redshift",
+        aws_conn_id="",
+        redshift_conn_id="",
         table="",
-        s3_bucket=Variable.get("s3_my_bucket"),
+        s3_bucket="",
         s3_key="",
-        json_path="auto",
-        region="us-east-1",
-        iam_role=Variable.get("iam_my-redshift-role"),
+        json_path="",
+        region="",
+        iam_role="",
         *args,
         **kwargs,
     ):
