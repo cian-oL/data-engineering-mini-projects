@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import pendulum
 import os
 from airflow.decorators import dag
+from airflow.models import Variable
 from airflow.operators.dummy import DummyOperator
 from operators import (
     StageToRedshiftOperator,
@@ -14,6 +15,11 @@ from helpers import SqlQueries
 default_args = {
     "owner": "udacity",
     "start_date": pendulum.now(),
+    "depends_on_past": False,
+    "retries": 3,
+    "retry_delay": timedelta(minutes=5),
+    "catchup": False,
+    "email_on_retry": False,
 }
 
 
@@ -28,6 +34,12 @@ def final_project():
 
     stage_events_to_redshift = StageToRedshiftOperator(
         task_id="Stage_events",
+        aws_conn_id="aws_credentials",
+        redshift_conn_id="redshift",
+        table="staging_events",
+        s3_bucket=Variable.get("s3_udacity_bucket"),
+        s3_key=Variable.get("s3_log_data_key"),
+        json_path=Variable.get("s3_log_json_path"),
     )
 
     stage_songs_to_redshift = StageToRedshiftOperator(
