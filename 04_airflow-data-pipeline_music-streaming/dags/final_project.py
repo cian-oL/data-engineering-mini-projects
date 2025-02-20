@@ -73,6 +73,9 @@ def final_project():
 
     load_songplays_table = LoadFactOperator(
         task_id="Load_songplays_fact_table",
+        redshift_conn_id="redshift",
+        table="public.songplays",
+        sql=SqlQueries.songplay_table_insert,
     )
 
     load_user_dimension_table = LoadDimensionOperator(
