@@ -49,15 +49,26 @@ def final_project():
 
     stage_events_to_redshift = StageToRedshiftOperator(
         task_id="Stage_events",
-        table="staging_events",
+        aws_conn_id="aws_credentials",
+        redshift_conn_id="redshift",
+        table="public.staging_events",
+        s3_bucket=Variable.get("s3_udend_bucket"),
         s3_key=Variable.get("s3_log_data_key"),
-        json_path=Variable.get("s3_my_log_json_path"),
+        json_path=Variable.get("s3_log_json_path"),
+        region="s3_region",
+        iam_role=Variable.get("iam_my_redshift_role"),
     )
 
     stage_songs_to_redshift = StageToRedshiftOperator(
         task_id="Stage_songs",
-        table="staging_songs",
+        aws_conn_id="aws_credentials",
+        redshift_conn_id="redshift",
+        table="public.staging_songs",
+        s3_bucket=Variable.get("s3_udend_bucket"),
         s3_key=Variable.get("s3_song_data_key"),
+        json_path="auto",
+        region="s3_region",
+        iam_role=Variable.get("iam_my_redshift_role"),
     )
 
     load_songplays_table = LoadFactOperator(
