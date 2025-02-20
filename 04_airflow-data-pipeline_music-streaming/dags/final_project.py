@@ -34,16 +34,15 @@ def final_project():
 
     stage_events_to_redshift = StageToRedshiftOperator(
         task_id="Stage_events",
-        aws_conn_id="aws_credentials",
-        redshift_conn_id="redshift",
         table="staging_events",
-        s3_bucket=Variable.get("s3_udacity_bucket"),
         s3_key=Variable.get("s3_log_data_key"),
         json_path=Variable.get("s3_log_json_path"),
     )
 
     stage_songs_to_redshift = StageToRedshiftOperator(
         task_id="Stage_songs",
+        table="staging_songs",
+        s3_key=Variable.get("s3_song_data_key"),
     )
 
     load_songplays_table = LoadFactOperator(
@@ -75,12 +74,16 @@ def final_project():
     start_operator >> stage_songs_to_redshift >> load_songplays_table
 
     # 2. Load to dimenstion tables with quality checks
-    load_songplays_table >> load_user_dimension_table >> run_quality_checks
-    load_songplays_table >> load_song_dimension_table >> run_quality_checks
-    load_songplays_table >> load_artist_dimension_table >> run_quality_checks
-    load_songplays_table >> load_time_dimension_table >> run_quality_checks
+    load_songplays_table >> load_user_dimension_table
+    load_songplays_table >> load_song_dimension_table
+    load_songplays_table >> load_artist_dimension_table
+    load_songplays_table >> load_time_dimension_table
 
     # 3. Quality control checks and completion
+    load_user_dimension_table >> run_quality_checks
+    load_song_dimension_table >> run_quality_checks
+    load_artist_dimension_table >> run_quality_checks
+    load_time_dimension_table >> run_quality_checks
 
 
 final_project_dag = final_project()
