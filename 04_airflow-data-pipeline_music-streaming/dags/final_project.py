@@ -3,7 +3,7 @@ import pendulum
 import os
 from airflow.decorators import dag
 from airflow.models import Variable
-from airflow.operators import CreateSchemaOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.dummy import DummyOperator
 from operators import (
     StageToRedshiftOperator,
@@ -33,9 +33,9 @@ def final_project():
 
     start_operator = DummyOperator(task_id="Begin_execution")
 
-    create_tables_task = CreateSchemaOperator(
+    create_tables_task = PostgresOperator(
         task_id="Create_tables",
-        redshift_conn_id="redshift",
+        postgres_conn_id="redshift",
         sql=[
             SqlQueries.staging_events_table_create,
             SqlQueries.staging_songs_table_create,
