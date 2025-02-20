@@ -3,8 +3,8 @@ import pendulum
 import os
 from airflow.decorators import dag
 from airflow.models import Variable
+from airflow.operators import CreateSchemaOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.postgres_operator import PostgresOperator
 from operators import (
     StageToRedshiftOperator,
     LoadFactOperator,
@@ -33,17 +33,10 @@ def final_project():
 
     start_operator = DummyOperator(task_id="Begin_execution")
 
-    create_tables_task = PostgresOperator(
-        task_id="create_tables",
-        postgres_conn_id="redshift",
+    create_tables_task = CreateSchemaOperator(
+        task_id="Create_tables",
+        redshift_conn_id="redshift",
         sql=[
-            SqlQueries.staging_events_table_drop,
-            SqlQueries.staging_songs_table_drop,
-            SqlQueries.songplays_table_drop,
-            SqlQueries.users_table_drop,
-            SqlQueries.songs_table_drop,
-            SqlQueries.artists_table_drop,
-            SqlQueries.time_table_drop,
             SqlQueries.staging_events_table_create,
             SqlQueries.staging_songs_table_create,
             SqlQueries.songplays_table_create,
@@ -58,7 +51,7 @@ def final_project():
         task_id="Stage_events",
         table="staging_events",
         s3_key=Variable.get("s3_log_data_key"),
-        json_path=Variable.get("s3_log_json_path"),
+        json_path=Variable.get("s3_my_log_json_path"),
     )
 
     stage_songs_to_redshift = StageToRedshiftOperator(
@@ -91,7 +84,7 @@ def final_project():
         task_id="Run_data_quality_checks",
     )
 
-    # 1. Extract data and load to fact table
+    # 1. Create tables, extract data and load to fact table
     start_operator >> create_tables_task
     create_tables_task >> stage_events_to_redshift >> load_songplays_table
     create_tables_task >> stage_songs_to_redshift >> load_songplays_table
