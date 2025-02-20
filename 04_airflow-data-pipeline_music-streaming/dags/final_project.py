@@ -4,6 +4,7 @@ import os
 from airflow.decorators import dag
 from airflow.models import Variable
 from airflow.operators.dummy import DummyOperator
+from airflow.operators.postgres_operator import PostgresOperator
 from operators import (
     StageToRedshiftOperator,
     LoadFactOperator,
@@ -31,6 +32,27 @@ default_args = {
 def final_project():
 
     start_operator = DummyOperator(task_id="Begin_execution")
+
+    create_tables_task = PostgresOperator(
+        task_id="create_tables",
+        postgres_conn_id="redshift",
+        sql=[
+            SqlQueries.staging_events_table_drop,
+            SqlQueries.staging_songs_table_drop,
+            SqlQueries.songplays_table_drop,
+            SqlQueries.users_table_drop,
+            SqlQueries.songs_table_drop,
+            SqlQueries.artists_table_drop,
+            SqlQueries.time_table_drop,
+            SqlQueries.staging_events_table_create,
+            SqlQueries.staging_songs_table_create,
+            SqlQueries.songplays_table_create,
+            SqlQueries.users_table_create,
+            SqlQueries.songs_table_create,
+            SqlQueries.artists_table_create,
+            SqlQueries.time_table_create,
+        ],
+    )
 
     stage_events_to_redshift = StageToRedshiftOperator(
         task_id="Stage_events",
@@ -70,8 +92,9 @@ def final_project():
     )
 
     # 1. Extract data and load to fact table
-    start_operator >> stage_events_to_redshift >> load_songplays_table
-    start_operator >> stage_songs_to_redshift >> load_songplays_table
+    start_operator >> create_tables_task
+    create_tables_task >> stage_events_to_redshift >> load_songplays_table
+    create_tables_task >> stage_songs_to_redshift >> load_songplays_table
 
     # 2. Load to dimenstion tables with quality checks
     load_songplays_table >> load_user_dimension_table
